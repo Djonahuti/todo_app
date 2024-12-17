@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced To-Do List with Priority</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="{{ url_for('static', filename='main.js') }}" defer></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Enhanced To-Do List</h1>
+
+        <!-- Form to add a new task -->
+        <form action="{{ url_for('add_task') }}" method="POST" class="input-group mb-4">
+            <input type="text" name="task" class="form-control" placeholder="Add a new task" required>
+            <input type="date" name="start_date" class="form-control" required>
+            <input type="date" name="end_date" class="form-control" required>
+            <select name="priority" class="form-select" required>
+                <option value="High">High Priority</option>
+                <option value="Medium">Medium Priority</option>
+                <option value="Low">Low Priority</option>
+            </select>
+            <button type="submit" class="btn btn-primary">Add</button>
+        </form>
+
+        <!-- Display tasks -->
+        <ul class="list-group">
+            {% for task in tasks %}
+            <li class="list-group-item d-flex justify-content-between align-items-center {% if task.done %}completed{% endif %} {% if task.priority == 'High' %}high-priority{% elif task.priority == 'Medium' %}medium-priority{% else %}low-priority{% endif %}" draggable="true" data-task-id="{{ loop.index0 }}">
+                    <span>
+                        <strong>{{ task.task }}</strong> - 
+                        <small>Status: {{ task.status }} | Priority: {{ task.priority }} | Created: {{ task.created_at.strftime('%Y-%m-%d') }} | Start: {{ task.start_date }} | End: {{ task.end_date }}</small>
+                    </span>
+                    <div>
+                        <button onclick="toggleTask({{ loop.index0 }})" class="btn btn-link p-0">
+                            {% if task.done %}
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                            {% else %}
+                                <i class="bi bi-check-circle-fill"></i>
+                            {% endif %}
+                        </button>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+
+        <!-- Recycle Bin -->
+        <div class="recycle-bin mt-4 text-center" ondrop="dropTask(event)" ondragover="allowDrop(event)">
+            <i class="bi bi-trash3-fill" id="recycle-bin-icon"></i>
+            <span id="deleted-count">{{ deleted_tasks|length }}</span>
+        </div>
+        
+        <!-- Deleted Tasks List -->
+        <h4 class="mt-5">Deleted Tasks</h4>
+        <ul class="list-group">
+            {% for task in deleted_tasks %}
+                <li class="list-group-item">
+                    <span>{{ task.task }} - <small>{{ task.created_at.strftime('%Y-%m-%d') }}</small></span>
+                    <button onclick="restoreTask({{ loop.index0 }})" class="btn btn-warning btn-sm">Restore</button>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+</body>
+</html>

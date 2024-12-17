@@ -1,0 +1,38 @@
+.high-priority {
+    border-left: 5px solid red;
+}
+
+.medium-priority {
+    border-left: 5px solid orange;
+}
+
+.low-priority {
+    border-left: 5px solid green;
+}
+
+.completed {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.recycle-bin {
+    font-size: 2rem;
+    cursor: pointer;
+    color: red;
+}
+
+.btn-link i {
+    font-size: 1.5rem;
+    color: #28a745;
+}
+
+.recycle-bin {
+    font-size: 2rem;
+    cursor: pointer;
+    color: red;
+    transition: transform 0.3s ease; /* Smooth transition for zoom effect */
+}
+
+.recycle-bin.zoomed {
+    transform: scale(1.9); /* Scale up the recycle bin when zoomed */
+}
