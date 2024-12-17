@@ -64,14 +64,14 @@
             </thead>
             <tbody>
             {% for task in tasks %}
-              <tr draggable="true" data-task-id="{{ loop.index0 }}">
+              <tr class=" {% if task.done %}completed{% endif %}" draggable="true" data-task-id="{{ loop.index0 }}">
                 <th scope="row">
                 {{ task.task }}
               </th>
                 <td>
                 {{ task.status }}
                   </td>
-                <td class=" {% if task.done %}completed{% endif %} {% if task.priority == 'High' %}high-priority{% elif task.priority == 'Medium' %}medium-priority{% else %}low-priority{% endif %}">
+                <td class=" {% if task.priority == 'High' %}high-priority{% elif task.priority == 'Medium' %}medium-priority{% else %}low-priority{% endif %}">
                 {{ task.priority }}
                   </td>
                 <td>
