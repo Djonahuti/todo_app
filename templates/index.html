@@ -14,7 +14,8 @@
         <h1 class="text-center mb-4">Enhanced To-Do List</h1>
 
         <!-- Form to add a new task -->
-        <form action="{{ url_for('add_task') }}" method="POST" class="input-group mb-4"><table class="table table-striped table-hover">
+        <form action="{{ url_for('add_task') }}" method="POST" class="input-group mb-4">
+            <table class="table table-striped table-hover table-responsive">
             <thead>
               <tr>
                 <th scope="col">Task Name</th>
@@ -50,7 +51,7 @@
         </form>
 
         <!-- Display tasks -->
-        <table class="table table-striped table-hover align-items-center">
+        <table class="table table-striped table-hover align-items-center table-responsive">
             <thead>
               <tr>
                 <th scope="col">Task Name</th>
