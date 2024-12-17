@@ -1,5 +1,5 @@
 .high-priority {
-    color: red;
+    border: 5px solid red;
 }
 
 .medium-priority {
