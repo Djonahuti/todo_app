@@ -4,8 +4,16 @@
 import sys
 import os
 
-# Add your application directory to the Python path
-sys.path.insert(0, os.path.dirname(__file__))
+# Application root (same folder as this file)
+APP_ROOT = os.path.dirname(__file__)
+sys.path.insert(0, APP_ROOT)
+
+# Load .env before importing the Flask app (cPanel does not auto-load it)
+try:
+    from dotenv import load_dotenv
+    load_dotenv(os.path.join(APP_ROOT, '.env'))
+except ImportError:
+    pass
 
 # Import the Flask app
 from app import app as application

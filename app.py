@@ -4,8 +4,15 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from functools import wraps
+from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
 import os
 import json
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 app = Flask(__name__)
 
@@ -14,6 +21,12 @@ app = Flask(__name__)
 DATABASE_URL = os.environ.get('DATABASE_URL')
 if DATABASE_URL and DATABASE_URL.startswith('postgres://'):
     DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
+
+# Strip Prisma-style ?schema=public (not valid for psycopg2/SQLAlchemy)
+if DATABASE_URL and '?schema=' in DATABASE_URL:
+    parsed = urlparse(DATABASE_URL)
+    query = [(k, v) for k, v in parse_qsl(parsed.query) if k != 'schema']
+    DATABASE_URL = urlunparse(parsed._replace(query=urlencode(query)))
 
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL or 'sqlite:///todos.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
