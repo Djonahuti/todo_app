@@ -38,7 +38,7 @@ jobs:
           # Create a deployment directory
           mkdir -p deploy
           
-          # Copy necessary files
+          # App files must land next to passenger_wsgi.py in the FTP account root
           cp -r templates deploy/
           cp -r static deploy/
           cp app.py deploy/
@@ -47,18 +47,15 @@ jobs:
           cp requirements.txt deploy/
           cp .htaccess deploy/
           
-          # Copy .env if exists (or create from secrets)
-          if [ -f .env ]; then
-            cp .env deploy/
-          else
-            echo "Creating .env from secrets..."
-            echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > deploy/.env
-            echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> deploy/.env
-            echo "FLASK_ENV=production" >> deploy/.env
-            echo "FLASK_DEBUG=False" >> deploy/.env
-          fi
+          # Always build .env from GitHub secrets in CI (.env is gitignored)
+          echo "Creating .env from secrets..."
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > deploy/.env
+          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> deploy/.env
+          echo "FLASK_ENV=production" >> deploy/.env
+          echo "FLASK_DEBUG=False" >> deploy/.env
           
-          echo "✓ Files prepared for deployment"
+          echo "✓ Files prepared for FTP root upload:"
+          find deploy -type f | sort
       
       - name: Deploy to cPanel via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
@@ -69,7 +66,9 @@ jobs:
           protocol: ${{ secrets.FTP_PROTOCOL || 'ftps' }}  # ftps, ftp, or ftps-legacy
           port: ${{ secrets.FTP_PORT || 21 }}
           local-dir: ./deploy/
-          server-dir: ${{ secrets.FTP_SERVER_DIR || '/public_html/' }}
+          # Upload into the FTP account root (Python app root for todo.utibe.name.ng)
+          # Do NOT use /public_html/ — that nests files away from passenger_wsgi.py
+          server-dir: /
           dangerous-clean-slate: false  # Don't delete everything first
           exclude: |
             **/.git*
