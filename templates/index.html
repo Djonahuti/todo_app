@@ -18,6 +18,18 @@
         <div class="orb orb-3"></div>
     </div>
 
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="flash-message flash-{{ category }}">
+                <i class="bi bi-{% if category == 'success' %}check-circle-fill{% elif category == 'danger' %}exclamation-circle-fill{% elif category == 'warning' %}exclamation-triangle-fill{% else %}info-circle-fill{% endif %}"></i>
+                <span>{{ message }}</span>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
     <div class="container">
         <!-- Header Section -->
         <header class="app-header">
@@ -28,17 +40,52 @@
                     </div>
                     <h1 class="app-title">Liquid Glass Todo</h1>
                 </div>
-                <div class="header-stats">
-                    <div class="stat-card glass-card">
-                        <i class="bi bi-list-check"></i>
-                        <span id="total-tasks">{{ tasks|length }}</span>
-                        <span class="stat-label">Tasks</span>
-                    </div>
-                    <div class="stat-card glass-card">
-                        <i class="bi bi-check-circle-fill"></i>
-                        <span id="completed-tasks">{{ tasks|selectattr('done')|list|length }}</span>
-                        <span class="stat-label">Done</span>
-                    </div>
+                <div class="header-actions">
+                    {% if current_user.is_authenticated %}
+                        <div class="user-menu">
+                            <div class="user-info glass-card">
+                                <i class="bi bi-person-circle"></i>
+                                <span>{{ current_user.username }}</span>
+                            </div>
+                            {% if current_user.is_admin %}
+                            <a href="{{ url_for('admin_dashboard') }}" class="btn-admin">
+                                <i class="bi bi-shield-lock"></i>
+                                <span>Admin</span>
+                            </a>
+                            {% endif %}
+                            <a href="{{ url_for('logout') }}" class="btn-logout">
+                                <i class="bi bi-box-arrow-right"></i>
+                                <span>Logout</span>
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="auth-buttons">
+                            <span class="guest-badge glass-card">
+                                <i class="bi bi-person"></i>
+                                Guest Mode (Temporary Storage)
+                            </span>
+                            <a href="{{ url_for('login') }}" class="btn-secondary">
+                                <i class="bi bi-box-arrow-in-right"></i>
+                                Login
+                            </a>
+                            <a href="{{ url_for('register') }}" class="btn-primary">
+                                <i class="bi bi-person-plus"></i>
+                                Sign Up
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="header-stats">
+                <div class="stat-card glass-card">
+                    <i class="bi bi-list-check"></i>
+                    <span id="total-tasks">{{ tasks|length }}</span>
+                    <span class="stat-label">Tasks</span>
+                </div>
+                <div class="stat-card glass-card">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span id="completed-tasks">{% if is_guest %}{{ tasks|selectattr('done')|list|length }}{% else %}{{ tasks|selectattr('done')|list|length }}{% endif %}</span>
+                    <span class="stat-label">Done</span>
                 </div>
             </div>
         </header>
@@ -79,49 +126,77 @@
             </div>
             <div class="tasks-grid" id="tasks-grid">
                 {% for task in tasks %}
-                <div class="task-card glass-card {% if task.done %}task-completed{% endif %}" 
-                     data-task-id="{{ task.id }}"
-                     data-category="{{ task.category }}"
-                     data-priority="{{ task.priority }}">
+                <div class="task-card glass-card {% if task.done or task.get('done') %}task-completed{% endif %}" 
+                     data-task-id="{% if is_guest %}{{ task.id or task.get('id') }}{% else %}{{ task.id }}{% endif %}"
+                     data-category="{% if is_guest %}{{ task.category or task.get('category') }}{% else %}{{ task.category }}{% endif %}"
+                     data-priority="{% if is_guest %}{{ task.priority or task.get('priority') }}{% else %}{{ task.priority }}{% endif %}">
                     <div class="task-header">
-                        <button class="task-checkbox {% if task.done %}checked{% endif %}" 
-                                onclick="toggleTask({{ task.id }})">
-                            <i class="bi {% if task.done %}bi-check-circle-fill{% else %}bi-circle{% endif %}"></i>
+                        <button class="task-checkbox {% if task.done or task.get('done') %}checked{% endif %}" 
+                                onclick="toggleTask({% if is_guest %}{{ task.id or task.get('id') }}{% else %}{{ task.id }}{% endif %})">
+                            <i class="bi {% if task.done or task.get('done') %}bi-check-circle-fill{% else %}bi-circle{% endif %}"></i>
                         </button>
                         <div class="task-meta">
-                            <span class="priority-badge priority-{{ task.priority.lower() }}">
-                                {{ task.priority }}
+                            <span class="priority-badge priority-{% if is_guest %}{{ (task.priority or task.get('priority'))|lower }}{% else %}{{ task.priority.lower() }}{% endif %}">
+                                {% if is_guest %}{{ task.priority or task.get('priority') }}{% else %}{{ task.priority }}{% endif %}
                             </span>
-                            <span class="category-badge">{{ task.category }}</span>
+                            <span class="category-badge">{% if is_guest %}{{ task.category or task.get('category') }}{% else %}{{ task.category }}{% endif %}</span>
                         </div>
                     </div>
                     <div class="task-content">
-                        <h3 class="task-title">{{ task.title }}</h3>
-                        {% if task.description %}
-                        <p class="task-description">{{ task.description }}</p>
+                        <h3 class="task-title">{% if is_guest %}{{ task.title or task.get('title') }}{% else %}{{ task.title }}{% endif %}</h3>
+                        {% if is_guest %}
+                            {% if task.description or task.get('description') %}
+                            <p class="task-description">{{ task.description or task.get('description') }}</p>
+                            {% endif %}
+                        {% else %}
+                            {% if task.description %}
+                            <p class="task-description">{{ task.description }}</p>
+                            {% endif %}
                         {% endif %}
-                        {% if task.tags %}
-                        <div class="task-tags">
-                            {% for tag in task.tags.split(',') %}
-                            <span class="tag">{{ tag.strip() }}</span>
-                            {% endfor %}
-                        </div>
+                        {% if is_guest %}
+                            {% set task_tags = task.tags or task.get('tags') %}
+                            {% if task_tags %}
+                            <div class="task-tags">
+                                {% for tag in task_tags.split(',') %}
+                                <span class="tag">{{ tag.strip() }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        {% else %}
+                            {% if task.tags %}
+                            <div class="task-tags">
+                                {% for tag in task.tags.split(',') %}
+                                <span class="tag">{{ tag.strip() }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
                         {% endif %}
                     </div>
                     <div class="task-footer">
                         <div class="task-dates">
-                            {% if task.start_date and task.end_date %}
-                            <span class="date-info">
-                                <i class="bi bi-calendar3"></i>
-                                {{ task.start_date }} → {{ task.end_date }}
-                            </span>
+                            {% if is_guest %}
+                                {% set start = task.start_date or task.get('start_date') %}
+                                {% set end = task.end_date or task.get('end_date') %}
+                                {% if start and end %}
+                                <span class="date-info">
+                                    <i class="bi bi-calendar3"></i>
+                                    {{ start }} → {{ end }}
+                                </span>
+                                {% endif %}
+                            {% else %}
+                                {% if task.start_date and task.end_date %}
+                                <span class="date-info">
+                                    <i class="bi bi-calendar3"></i>
+                                    {{ task.start_date }} → {{ task.end_date }}
+                                </span>
+                                {% endif %}
                             {% endif %}
                         </div>
                         <div class="task-actions">
-                            <button class="action-btn" onclick="openEditModal({{ task.id }})" title="Edit">
+                            <button class="action-btn" onclick="openEditModal({% if is_guest %}{{ task.id or task.get('id') }}{% else %}{{ task.id }}{% endif %})" title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <button class="action-btn delete-btn" onclick="deleteTask({{ task.id }})" title="Delete">
+                            <button class="action-btn delete-btn" onclick="deleteTask({% if is_guest %}{{ task.id or task.get('id') }}{% else %}{{ task.id }}{% endif %})" title="Delete">
                                 <i class="bi bi-trash3"></i>
                             </button>
                         </div>
@@ -159,15 +234,15 @@
                 {% for task in deleted_tasks %}
                 <div class="deleted-task-card glass-card">
                     <div class="deleted-task-content">
-                        <h4>{{ task.title }}</h4>
-                        <span class="deleted-date">Deleted {{ task.updated_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                        <h4>{% if is_guest %}{{ task.title or task.get('title') }}{% else %}{{ task.title }}{% endif %}</h4>
+                        <span class="deleted-date">Deleted {% if is_guest %}{{ task.updated_at or task.get('updated_at') }}{% else %}{{ task.updated_at.strftime('%Y-%m-%d %H:%M') }}{% endif %}</span>
                     </div>
                     <div class="deleted-task-actions">
-                        <button class="btn-restore" onclick="restoreTask({{ task.id }})">
+                        <button class="btn-restore" onclick="restoreTask({% if is_guest %}{{ task.id or task.get('id') }}{% else %}{{ task.id }}{% endif %})">
                             <i class="bi bi-arrow-counterclockwise"></i>
                             Restore
                         </button>
-                        <button class="btn-delete-permanent" onclick="permanentDelete({{ task.id }})">
+                        <button class="btn-delete-permanent" onclick="permanentDelete({% if is_guest %}{{ task.id or task.get('id') }}{% else %}{{ task.id }}{% endif %})">
                             <i class="bi bi-x-lg"></i>
                         </button>
                     </div>

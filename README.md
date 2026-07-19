@@ -42,6 +42,15 @@ Liquid Glass Todo is a beautifully designed, full-featured task management appli
 - **Modal Dialogs** - Smooth sliding modals for task creation/editing
 - **Responsive Design** - Adapts perfectly to all screen sizes
 
+### 👥 User Management Features
+- 🔐 **User Authentication** - Secure login and registration system
+- 👤 **User Accounts** - Permanent storage for logged-in users
+- 👻 **Guest Mode** - Temporary session-based storage for guests
+- 🛡️ **Admin Dashboard** - Monitor users, tasks, and system usage
+- 📊 **User Statistics** - Track activity and engagement
+- 🔒 **Role-Based Access** - Admin and regular user roles
+- 💾 **Data Persistence** - Never lose your tasks when logged in
+
 ### 📝 Task Management Features
 - ✅ **Create Tasks** - With title, description, dates, priority, category, and tags
 - 📋 **Edit Tasks** - Update any task details inline
@@ -59,10 +68,13 @@ Liquid Glass Todo is a beautifully designed, full-featured task management appli
 ### 🛠️ Technical Features
 - **PostgreSQL Database** - Robust, scalable data storage
 - **SQLAlchemy ORM** - Clean database operations
+- **Flask-Login** - Secure user session management
+- **Session Storage** - For guest users (temporary)
 - **RESTful API** - JSON endpoints for all operations
 - **Environment Config** - Secure configuration with .env
 - **Production Ready** - Gunicorn WSGI server support
 - **cPanel Compatible** - Passenger WSGI for shared hosting
+- **GitHub Actions** - Automated FTP deployment
 - **Error Handling** - Graceful error management
 - **Security Headers** - XSS, CSRF, clickjacking protection
 
@@ -111,6 +123,36 @@ Liquid Glass Todo is a beautifully designed, full-featured task management appli
    http://localhost:5000
    ```
 
+7. **Default admin account:**
+   ```
+   Username: admin
+   Password: admin123
+   ⚠️ Change this immediately in production!
+   ```
+
+### User Modes
+
+#### 🔐 Logged In Mode (Recommended)
+- **Permanent storage** - Your tasks are saved in the database
+- **Access anywhere** - Login from any device
+- **Full features** - All features available
+- **Secure** - Password-protected account
+
+**To use:**
+1. Click "Sign Up" to create an account
+2. Or click "Login" if you have an account
+3. Start creating tasks - they'll be saved permanently!
+
+#### 👻 Guest Mode
+- **Temporary storage** - Tasks stored in browser session only
+- **No signup required** - Start immediately
+- **Session-based** - Tasks deleted when browser closes
+- **Try before signup** - Test the app without commitment
+
+**To use:**
+- Just start using the app without logging in
+- Or click "Continue as Guest" on login page
+
 ### Using SQLite (Development)
 
 For quick local testing without PostgreSQL:
@@ -129,6 +171,146 @@ DATABASE_URL=postgresql://username:password@localhost:5432/todo_db
 SECRET_KEY=your-secret-key-here
 FLASK_ENV=production
 ```
+
+---
+
+## 👥 User Authentication
+
+### Registration
+
+1. Click **"Sign Up"** button
+2. Fill in:
+   - Username (unique)
+   - Email (unique)
+   - Password (min 6 characters)
+   - Confirm password
+3. Click **"Create Account"**
+4. You'll be redirected to login
+
+### Login
+
+1. Click **"Login"** button
+2. Enter your username and password
+3. Optionally check "Remember me"
+4. Click **"Sign In"**
+
+### Guest to User Conversion
+
+⚠️ **Note:** Guest tasks are not automatically transferred when you create an account. Guest mode is temporary only.
+
+**Recommendation:** Create an account before starting serious work!
+
+---
+
+## 🛡️ Admin Dashboard
+
+### Accessing Admin Panel
+
+1. Login with admin account
+2. Click **"Admin"** button in header
+3. Or visit `/admin` directly
+
+### Default Admin Account
+
+```
+Username: admin
+Password: admin123
+```
+
+**⚠️ SECURITY:** Change the default admin password immediately!
+
+To change admin password:
+1. Login as admin
+2. Create a new admin user
+3. Login with new admin
+4. Delete old admin account
+
+Or update directly in database:
+```python
+from app import app, db, User
+with app.app_context():
+    admin = User.query.filter_by(username='admin').first()
+    admin.set_password('new-secure-password')
+    db.session.commit()
+```
+
+### Admin Features
+
+#### 📊 System Statistics
+- Total users count
+- Total tasks created
+- Completed tasks
+- Active tasks
+
+#### 👥 User Management
+- View all registered users
+- See user details (email, join date, last login)
+- View task count per user
+- Make users admin
+- Delete users
+- Cannot delete yourself
+- Cannot modify your own admin status
+
+#### 📈 Activity Monitoring
+- Recent user logins
+- Recent task creations
+- User engagement metrics
+- Category distribution
+
+### Making Users Admin
+
+1. Go to Admin Dashboard
+2. Find user in User Management table
+3. Click shield icon to toggle admin status
+4. Confirm the action
+
+### Deleting Users
+
+1. Go to Admin Dashboard
+2. Find user in User Management table
+3. Click trash icon
+4. Confirm deletion (this is permanent!)
+
+**Note:** When you delete a user, all their tasks are also deleted (cascade delete).
+
+---
+
+## 🚀 Automated Deployment with GitHub Actions
+
+### Setup Automated FTP Deployment
+
+The app includes a GitHub Actions workflow for automatic deployment to cPanel via FTP.
+
+#### Quick Setup:
+
+1. **Add GitHub Secrets** (Settings → Secrets → Actions):
+   ```
+   FTP_SERVER          = ftp.yourdomain.com
+   FTP_USERNAME        = your-ftp-username
+   FTP_PASSWORD        = your-ftp-password
+   FTP_SERVER_DIR      = /public_html/
+   DATABASE_URL        = postgresql://...
+   SECRET_KEY          = your-secret-key
+   ```
+
+2. **Push to main branch:**
+   ```bash
+   git push origin main
+   ```
+
+3. **Watch deployment** in Actions tab
+
+4. **Restart app** in cPanel after first deployment
+
+#### Features:
+- ✅ Automatic deployment on push to `main`
+- ✅ Manual deployment trigger available
+- ✅ Code validation before deployment
+- ✅ Incremental file uploads (only changed files)
+- ✅ Deployment status notifications
+- ✅ Error handling and rollback protection
+
+**Full Guide:** [GITHUB_ACTIONS_SETUP.md](GITHUB_ACTIONS_SETUP.md)
 
 ---
 
@@ -429,6 +611,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ### Documentation
 - [Quick Setup](CPANEL_SETUP.md) - cPanel setup guide
 - [Deployment](DEPLOYMENT_GUIDE.md) - Comprehensive deployment guide
+- [GitHub Actions](GITHUB_ACTIONS_SETUP.md) - Automated FTP deployment setup
+- [Quick Reference](QUICK_START.md) - Quick deployment reference
 
 ### Issues
 - Report bugs via GitHub Issues
@@ -445,15 +629,21 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🗺️ Roadmap
 
 ### Planned Features
-- [ ] User authentication and accounts
+- [x] User authentication and accounts ✅ **DONE!**
+- [x] Admin dashboard and user management ✅ **DONE!**
+- [x] Guest mode with session storage ✅ **DONE!**
+- [x] Automated deployment with GitHub Actions ✅ **DONE!**
 - [ ] Task sharing and collaboration
-- [ ] Due date reminders
+- [ ] Due date reminders and notifications
 - [ ] Subtasks and checklists
 - [ ] Dark mode toggle
-- [ ] Export tasks (CSV, JSON)
+- [ ] Export tasks (CSV, JSON, PDF)
 - [ ] Task templates
-- [ ] Activity timeline
+- [ ] Activity timeline and history
 - [ ] Mobile app (React Native)
+- [ ] Calendar view integration
+- [ ] Email notifications
+- [ ] Two-factor authentication (2FA)
 
 ---
 
