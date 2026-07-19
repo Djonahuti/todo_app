@@ -39,13 +39,14 @@ jobs:
           mkdir -p deploy
           
           # App files must land next to passenger_wsgi.py in the FTP account root
+          # Do NOT deploy .htaccess — cPanel writes the Passenger config there.
+          # Overwriting it causes: No such application (or application not configured)
           cp -r templates deploy/
           cp -r static deploy/
           cp app.py deploy/
           cp config.py deploy/
           cp passenger_wsgi.py deploy/
           cp requirements.txt deploy/
-          cp .htaccess deploy/
           
           # Always build .env from GitHub secrets in CI (.env is gitignored)
           echo "Creating .env from secrets..."
@@ -76,6 +77,7 @@ jobs:
             **/node_modules/**
             **/__pycache__/**
             **/*.pyc
+            **/.htaccess
             **/.env.example
             **/README.md
             **/DEPLOYMENT_GUIDE.md
