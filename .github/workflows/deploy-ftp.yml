@@ -1,0 +1,138 @@
+name: Deploy to cPanel via FTP
+
+on:
+  push:
+    branches:
+      - main  # Deploy on push to main branch
+      - production  # Or production branch
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  deploy:
+    name: Deploy to cPanel
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for proper deployment
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies (for validation)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Run basic validation
+        run: |
+          python -c "import app; print('✓ App imports successfully')"
+      
+      - name: Prepare deployment files
+        run: |
+          echo "Preparing files for deployment..."
+          # Create a deployment directory
+          mkdir -p deploy
+          
+          # Copy necessary files
+          cp -r templates deploy/
+          cp -r static deploy/
+          cp app.py deploy/
+          cp config.py deploy/
+          cp passenger_wsgi.py deploy/
+          cp requirements.txt deploy/
+          cp .htaccess deploy/
+          
+          # Copy .env if exists (or create from secrets)
+          if [ -f .env ]; then
+            cp .env deploy/
+          else
+            echo "Creating .env from secrets..."
+            echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > deploy/.env
+            echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> deploy/.env
+            echo "FLASK_ENV=production" >> deploy/.env
+            echo "FLASK_DEBUG=False" >> deploy/.env
+          fi
+          
+          echo "✓ Files prepared for deployment"
+      
+      - name: Deploy to cPanel via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ${{ secrets.FTP_PROTOCOL || 'ftps' }}  # ftps, ftp, or ftps-legacy
+          port: ${{ secrets.FTP_PORT || 21 }}
+          local-dir: ./deploy/
+          server-dir: ${{ secrets.FTP_SERVER_DIR || '/public_html/' }}
+          dangerous-clean-slate: false  # Don't delete everything first
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/__pycache__/**
+            **/*.pyc
+            **/.env.example
+            **/README.md
+            **/DEPLOYMENT_GUIDE.md
+            **/CPANEL_SETUP.md
+            **/QUICK_START.md
+            **/.vscode/**
+            **/.idea/**
+      
+      - name: Trigger cPanel Python App Restart
+        if: success()
+        run: |
+          echo "✓ Files deployed successfully!"
+          echo "Please restart your Python application in cPanel to apply changes:"
+          echo "  1. Login to cPanel"
+          echo "  2. Go to 'Setup Python App'"
+          echo "  3. Click 'RESTART' button"
+          echo ""
+          echo "Or create a restart.txt file to auto-restart:"
+          echo "  touch tmp/restart.txt"
+      
+      - name: Deployment Summary
+        if: always()
+        run: |
+          echo "================================================"
+          echo "          DEPLOYMENT SUMMARY"
+          echo "================================================"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Author: ${{ github.actor }}"
+          echo "Time: $(date)"
+          echo "Status: ${{ job.status }}"
+          echo "================================================"
+      
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "❌ Deployment failed!"
+          echo "Please check the logs above for errors."
+          echo "Common issues:"
+          echo "  - Wrong FTP credentials"
+          echo "  - FTP server not accessible"
+          echo "  - Insufficient permissions"
+          echo "  - File path issues"
+
+  # Optional: Create a deployment notification
+  notify:
+    name: Send deployment notification
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Deployment notification
+        run: |
+          if [ "${{ needs.deploy.result }}" == "success" ]; then
+            echo "✅ Deployment completed successfully!"
+          else
+            echo "❌ Deployment failed. Please check the logs."
+          fi
