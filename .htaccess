@@ -1,17 +1,15 @@
-# .htaccess for cPanel deployment
-# This file handles routing and security
+# CloudLinux / cPanel Passenger config is written by "Setup Python App".
+# Keep that block on the server. Do not rewrite requests to passenger_wsgi.py.
 
-# Enable RewriteEngine
 RewriteEngine On
 
-# Redirect to HTTPS (if you have SSL)
-# RewriteCond %{HTTPS} off
-# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+# Serve real files/directories (static assets) as-is
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
 
-# Route all requests to the Python application
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ passenger_wsgi.py/$1 [QSA,L]
+# Let Passenger handle the app (do not route to passenger_wsgi.py)
+RewriteRule ^ - [L]
 
 # Security headers
 <IfModule mod_headers.c>
@@ -21,16 +19,14 @@ RewriteRule ^(.*)$ passenger_wsgi.py/$1 [QSA,L]
     Header set Referrer-Policy "strict-origin-when-cross-origin"
 </IfModule>
 
-# Disable directory browsing
 Options -Indexes
 
-# Protect sensitive files
+# Block dotfiles except .htaccess handling (Passenger loads .py from disk, not HTTP)
 <FilesMatch "^\.">
-    Order allow,deny
-    Deny from all
+    Require all denied
 </FilesMatch>
 
-<FilesMatch "(\.env|\.py|\.pyc|\.log)$">
-    Order allow,deny
-    Deny from all
+# Block direct HTTP access to secrets/logs (not passenger_wsgi — Passenger uses the filesystem)
+<FilesMatch "(\.env|\.pyc|\.log)$">
+    Require all denied
 </FilesMatch>
