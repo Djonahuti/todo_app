@@ -38,7 +38,7 @@
                     <div class="app-icon">
                         <i class="bi bi-check2-circle"></i>
                     </div>
-                    <h1 class="app-title">Advanced Todo</h1>
+                    <h1 class="app-title">Advance Todo</h1>
                 </div>
                 <div class="header-actions">
                     {% if current_user.is_authenticated %}
@@ -98,59 +98,18 @@
                     <input type="text" id="search-input" placeholder="Search tasks..." class="search-input">
                 </div>
                 <div class="filters">
-                    <div class="shad-select" data-select-id="category-filter">
-                        <button type="button" class="shad-select-trigger" aria-haspopup="listbox" aria-expanded="false">
-                            <span class="shad-select-value">All Categories</span>
-                            <i class="bi bi-chevron-down shad-select-icon" aria-hidden="true"></i>
-                        </button>
-                        <div class="shad-select-popover" hidden>
-                            <div class="shad-select-viewport" role="listbox" tabindex="-1">
-                                <div class="shad-select-label">Category</div>
-                                <div role="option" class="shad-select-item is-selected" data-value="all" aria-selected="true">
-                                    <span class="shad-select-item-indicator"><i class="bi bi-check"></i></span>
-                                    <span class="shad-select-item-text">All Categories</span>
-                                </div>
-                                {% for category in categories %}
-                                <div role="option" class="shad-select-item" data-value="{{ category }}" aria-selected="false">
-                                    <span class="shad-select-item-indicator"><i class="bi bi-check"></i></span>
-                                    <span class="shad-select-item-text">{{ category }}</span>
-                                </div>
-                                {% endfor %}
-                            </div>
-                        </div>
-                        <input type="hidden" id="category-filter" value="all">
-                    </div>
-                    <div class="shad-select" data-select-id="priority-filter">
-                        <button type="button" class="shad-select-trigger" aria-haspopup="listbox" aria-expanded="false">
-                            <span class="shad-select-value">All Priorities</span>
-                            <i class="bi bi-chevron-down shad-select-icon" aria-hidden="true"></i>
-                        </button>
-                        <div class="shad-select-popover" hidden>
-                            <div class="shad-select-viewport" role="listbox" tabindex="-1">
-                                <div class="shad-select-label">Priority</div>
-                                <div role="option" class="shad-select-item is-selected" data-value="all" aria-selected="true">
-                                    <span class="shad-select-item-indicator"><i class="bi bi-check"></i></span>
-                                    <span class="shad-select-item-text">All Priorities</span>
-                                </div>
-                                <div role="option" class="shad-select-item" data-value="High" aria-selected="false">
-                                    <span class="shad-select-item-indicator"><i class="bi bi-check"></i></span>
-                                    <span class="priority-dot priority-high"></span>
-                                    <span class="shad-select-item-text">High</span>
-                                </div>
-                                <div role="option" class="shad-select-item" data-value="Medium" aria-selected="false">
-                                    <span class="shad-select-item-indicator"><i class="bi bi-check"></i></span>
-                                    <span class="priority-dot priority-medium"></span>
-                                    <span class="shad-select-item-text">Medium</span>
-                                </div>
-                                <div role="option" class="shad-select-item" data-value="Low" aria-selected="false">
-                                    <span class="shad-select-item-indicator"><i class="bi bi-check"></i></span>
-                                    <span class="priority-dot priority-low"></span>
-                                    <span class="shad-select-item-text">Low</span>
-                                </div>
-                            </div>
-                        </div>
-                        <input type="hidden" id="priority-filter" value="all">
-                    </div>
+                    <select id="category-filter" class="filter-select glass-input">
+                        <option value="all">All Categories</option>
+                        {% for category in categories %}
+                        <option value="{{ category }}">{{ category }}</option>
+                        {% endfor %}
+                    </select>
+                    <select id="priority-filter" class="filter-select glass-input">
+                        <option value="all">All Priorities</option>
+                        <option value="High">High Priority</option>
+                        <option value="Medium">Medium Priority</option>
+                        <option value="Low">Low Priority</option>
+                    </select>
                 </div>
                 <button class="btn-primary" onclick="openAddModal()">
                     <i class="bi bi-plus-lg"></i>
@@ -327,18 +286,11 @@
                     </div>
                     <div class="form-group">
                         <label for="task-priority">Priority</label>
-                        <div class="priority-segmented" role="radiogroup" aria-label="Priority">
-                            <button type="button" class="priority-option" data-value="Low" aria-pressed="false">
-                                <span class="priority-dot priority-low"></span>Low
-                            </button>
-                            <button type="button" class="priority-option is-active" data-value="Medium" aria-pressed="true">
-                                <span class="priority-dot priority-medium"></span>Medium
-                            </button>
-                            <button type="button" class="priority-option" data-value="High" aria-pressed="false">
-                                <span class="priority-dot priority-high"></span>High
-                            </button>
-                            <input type="hidden" id="task-priority" name="priority" value="Medium">
-                        </div>
+                        <select id="task-priority" name="priority" class="glass-input">
+                            <option value="Low">Low</option>
+                            <option value="Medium" selected>Medium</option>
+                            <option value="High">High</option>
+                        </select>
                     </div>
                 </div>
 
