@@ -1029,6 +1029,19 @@ body {
     animation: slideUp 0.3s ease-out;
 }
 
+.modal-content:has(.shad-select.is-open) {
+    overflow: visible;
+}
+
+.form-group .shad-select {
+    width: 100%;
+    min-width: 0;
+}
+
+.form-group .shad-select-popover {
+    z-index: 60;
+}
+
 @keyframes slideUp {
     from {
         opacity: 0;

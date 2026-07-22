@@ -328,11 +328,33 @@
                     </div>
                     <div class="form-group">
                         <label for="task-priority">Priority</label>
-                        <select id="task-priority" name="priority" class="glass-input">
-                            <option value="Low">Low</option>
-                            <option value="Medium" selected>Medium</option>
-                            <option value="High">High</option>
-                        </select>
+                        <div class="shad-select" data-select="task-priority">
+                            <input type="hidden" id="task-priority" name="priority" value="Medium">
+                            <button type="button" class="shad-select-trigger" aria-haspopup="listbox" aria-expanded="false">
+                                <span class="shad-select-value">Medium Priority</span>
+                                <i class="bi bi-chevron-down shad-select-icon" aria-hidden="true"></i>
+                            </button>
+                            <div class="shad-select-popover glass-select-panel" hidden>
+                                <div class="shad-select-viewport" role="listbox" tabindex="-1">
+                                    <div class="shad-select-label">Priority</div>
+                                    <div class="shad-select-item" role="option" data-value="High" aria-selected="false">
+                                        <span class="shad-select-item-indicator"><i class="bi bi-check-lg"></i></span>
+                                        <span class="priority-dot priority-high"></span>
+                                        <span class="shad-select-item-text">High Priority</span>
+                                    </div>
+                                    <div class="shad-select-item is-selected" role="option" data-value="Medium" aria-selected="true">
+                                        <span class="shad-select-item-indicator"><i class="bi bi-check-lg"></i></span>
+                                        <span class="priority-dot priority-medium"></span>
+                                        <span class="shad-select-item-text">Medium Priority</span>
+                                    </div>
+                                    <div class="shad-select-item" role="option" data-value="Low" aria-selected="false">
+                                        <span class="shad-select-item-indicator"><i class="bi bi-check-lg"></i></span>
+                                        <span class="priority-dot priority-low"></span>
+                                        <span class="shad-select-item-text">Low Priority</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

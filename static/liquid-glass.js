@@ -16,7 +16,6 @@ function initializeEventListeners() {
     
     // ShadCN-style selects + filter functionality
     initializeShadSelects();
-    initializePrioritySegmented();
 
     const categoryFilter = document.getElementById('category-filter');
     const priorityFilter = document.getElementById('priority-filter');
@@ -196,28 +195,10 @@ function setShadSelectValue(selectEl, value, dispatchChange = false) {
     }
 }
 
-function initializePrioritySegmented() {
-    const group = document.querySelector('.priority-segmented');
-    if (!group) return;
-
-    group.querySelectorAll('.priority-option').forEach((btn) => {
-        btn.addEventListener('click', () => {
-            setPrioritySegmentedValue(btn.dataset.value);
-        });
-    });
-}
-
-function setPrioritySegmentedValue(value) {
-    const group = document.querySelector('.priority-segmented');
-    const input = document.getElementById('task-priority');
-    if (!group || !input) return;
-
-    group.querySelectorAll('.priority-option').forEach((btn) => {
-        const isActive = btn.dataset.value === value;
-        btn.classList.toggle('is-active', isActive);
-        btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-    });
-    input.value = value;
+function setTaskPriorityValue(value) {
+    const selectEl = document.querySelector('[data-select="task-priority"]');
+    if (!selectEl) return;
+    setShadSelectValue(selectEl, value || 'Medium');
 }
 
 // ===== MODAL FUNCTIONS =====
@@ -229,7 +210,7 @@ function openAddModal() {
     
     currentEditingTask = null;
     form.reset();
-    setPrioritySegmentedValue('Medium');
+    setTaskPriorityValue('Medium');
     modalTitle.textContent = 'Create New Task';
     submitText.textContent = 'Create Task';
     
@@ -258,7 +239,7 @@ function openEditModal(taskId) {
         const category = taskCard.dataset.category;
         const priority = taskCard.dataset.priority;
         document.getElementById('task-category').value = category;
-        setPrioritySegmentedValue(priority);
+        setTaskPriorityValue(priority);
         
         // Set dates and tags if visible
         const dateInfo = taskCard.querySelector('.date-info');
