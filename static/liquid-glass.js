@@ -14,8 +14,8 @@ function initializeEventListeners() {
         searchInput.addEventListener('input', debounce(handleSearch, 300));
     }
     
-    // Custom selects + filter functionality
-    initializeCustomSelects();
+    // ShadCN-style selects + filter functionality
+    initializeShadSelects();
     initializePrioritySegmented();
 
     const categoryFilter = document.getElementById('category-filter');
@@ -29,59 +29,139 @@ function initializeEventListeners() {
     }
 }
 
-// ===== CUSTOM SELECT =====
-function initializeCustomSelects() {
-    document.querySelectorAll('.custom-select').forEach((selectEl) => {
-        const trigger = selectEl.querySelector('.custom-select-trigger');
-        const menu = selectEl.querySelector('.custom-select-menu');
+// ===== SHADCN-STYLE SELECT =====
+function initializeShadSelects() {
+    document.querySelectorAll('.shad-select').forEach((selectEl) => {
+        const trigger = selectEl.querySelector('.shad-select-trigger');
+        const popover = selectEl.querySelector('.shad-select-popover');
         const hiddenInput = selectEl.querySelector('input[type="hidden"]');
-        if (!trigger || !menu || !hiddenInput) return;
+        if (!trigger || !popover || !hiddenInput) return;
 
         trigger.addEventListener('click', (e) => {
             e.stopPropagation();
             const isOpen = selectEl.classList.contains('is-open');
-            closeAllCustomSelects();
-            if (!isOpen) {
-                openCustomSelect(selectEl);
+            closeAllShadSelects();
+            if (!isOpen) openShadSelect(selectEl);
+        });
+
+        trigger.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                if (!selectEl.classList.contains('is-open')) {
+                    openShadSelect(selectEl);
+                }
+                if (e.key === 'ArrowUp') {
+                    highlightShadItem(selectEl, 'last');
+                } else {
+                    highlightShadItem(selectEl, 'selected');
+                }
             }
         });
 
-        menu.querySelectorAll('[role="option"]').forEach((option) => {
+        popover.addEventListener('click', (e) => e.stopPropagation());
+
+        selectEl.querySelectorAll('.shad-select-item').forEach((option) => {
             option.addEventListener('click', (e) => {
                 e.stopPropagation();
-                setCustomSelectValue(selectEl, option.dataset.value, true);
-                closeCustomSelect(selectEl);
+                setShadSelectValue(selectEl, option.dataset.value, true);
+                closeShadSelect(selectEl);
+                trigger.focus();
+            });
+
+            option.addEventListener('mouseenter', () => {
+                setHighlightedShadItem(selectEl, option);
             });
         });
     });
 
-    document.addEventListener('click', closeAllCustomSelects);
+    document.addEventListener('click', closeAllShadSelects);
+
+    document.addEventListener('keydown', (e) => {
+        const openSelect = document.querySelector('.shad-select.is-open');
+        if (!openSelect) return;
+
+        const items = Array.from(openSelect.querySelectorAll('.shad-select-item'));
+        const current = openSelect.querySelector('.shad-select-item.is-highlighted')
+            || openSelect.querySelector('.shad-select-item.is-selected');
+        const currentIndex = items.indexOf(current);
+
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            closeShadSelect(openSelect);
+            openSelect.querySelector('.shad-select-trigger')?.focus();
+            return;
+        }
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            const next = items[(currentIndex + 1) % items.length];
+            setHighlightedShadItem(openSelect, next);
+            return;
+        }
+
+        if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            const prev = items[(currentIndex - 1 + items.length) % items.length];
+            setHighlightedShadItem(openSelect, prev);
+            return;
+        }
+
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            const target = openSelect.querySelector('.shad-select-item.is-highlighted') || current;
+            if (target) {
+                setShadSelectValue(openSelect, target.dataset.value, true);
+                closeShadSelect(openSelect);
+                openSelect.querySelector('.shad-select-trigger')?.focus();
+            }
+        }
+    });
 }
 
-function openCustomSelect(selectEl) {
-    const trigger = selectEl.querySelector('.custom-select-trigger');
-    const menu = selectEl.querySelector('.custom-select-menu');
+function openShadSelect(selectEl) {
+    const trigger = selectEl.querySelector('.shad-select-trigger');
+    const popover = selectEl.querySelector('.shad-select-popover');
     selectEl.classList.add('is-open');
     trigger.setAttribute('aria-expanded', 'true');
-    menu.hidden = false;
+    popover.hidden = false;
+    highlightShadItem(selectEl, 'selected');
 }
 
-function closeCustomSelect(selectEl) {
-    const trigger = selectEl.querySelector('.custom-select-trigger');
-    const menu = selectEl.querySelector('.custom-select-menu');
+function closeShadSelect(selectEl) {
+    const trigger = selectEl.querySelector('.shad-select-trigger');
+    const popover = selectEl.querySelector('.shad-select-popover');
     selectEl.classList.remove('is-open');
     trigger.setAttribute('aria-expanded', 'false');
-    menu.hidden = true;
+    popover.hidden = true;
+    selectEl.querySelectorAll('.shad-select-item.is-highlighted').forEach((item) => {
+        item.classList.remove('is-highlighted');
+    });
 }
 
-function closeAllCustomSelects() {
-    document.querySelectorAll('.custom-select.is-open').forEach(closeCustomSelect);
+function closeAllShadSelects() {
+    document.querySelectorAll('.shad-select.is-open').forEach(closeShadSelect);
 }
 
-function setCustomSelectValue(selectEl, value, dispatchChange = false) {
-    const label = selectEl.querySelector('.custom-select-label');
+function highlightShadItem(selectEl, mode) {
+    const items = Array.from(selectEl.querySelectorAll('.shad-select-item'));
+    if (!items.length) return;
+    let target;
+    if (mode === 'last') target = items[items.length - 1];
+    else target = selectEl.querySelector('.shad-select-item.is-selected') || items[0];
+    setHighlightedShadItem(selectEl, target);
+}
+
+function setHighlightedShadItem(selectEl, item) {
+    selectEl.querySelectorAll('.shad-select-item').forEach((el) => {
+        el.classList.toggle('is-highlighted', el === item);
+    });
+    item?.scrollIntoView({ block: 'nearest' });
+}
+
+function setShadSelectValue(selectEl, value, dispatchChange = false) {
+    const label = selectEl.querySelector('.shad-select-value');
     const hiddenInput = selectEl.querySelector('input[type="hidden"]');
-    const options = selectEl.querySelectorAll('[role="option"]');
+    const options = selectEl.querySelectorAll('.shad-select-item');
     let matched = null;
 
     options.forEach((option) => {
@@ -93,13 +173,8 @@ function setCustomSelectValue(selectEl, value, dispatchChange = false) {
 
     if (!matched) return;
 
-    const optionLabel = Array.from(matched.childNodes)
-        .filter((node) => node.nodeType === Node.TEXT_NODE)
-        .map((node) => node.textContent.trim())
-        .join(' ')
-        .trim() || matched.textContent.trim();
-
-    label.textContent = optionLabel;
+    const textEl = matched.querySelector('.shad-select-item-text');
+    label.textContent = textEl ? textEl.textContent.trim() : matched.textContent.trim();
     hiddenInput.value = value;
 
     if (dispatchChange) {
@@ -199,14 +274,10 @@ function closeModal() {
     currentEditingTask = null;
 }
 
-// Close modal on Escape key (after closing any open custom select)
+// Close modal on Escape (selects handle Escape themselves while open)
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
-        const openSelect = document.querySelector('.custom-select.is-open');
-        if (openSelect) {
-            closeCustomSelect(openSelect);
-            return;
-        }
+        if (document.querySelector('.shad-select.is-open')) return;
         closeModal();
     }
 });
