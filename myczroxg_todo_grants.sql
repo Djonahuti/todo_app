@@ -1,0 +1,3 @@
+GRANT USAGE ON SCHEMA public TO myczroxg_david;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO myczroxg_david;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO myczroxg_david;

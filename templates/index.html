@@ -38,7 +38,7 @@
                     <div class="app-icon">
                         <i class="bi bi-check2-circle"></i>
                     </div>
-                    <h1 class="app-title">Liquid Glass Todo</h1>
+                    <h1 class="app-title">Advanced Todo</h1>
                 </div>
                 <div class="header-actions">
                     {% if current_user.is_authenticated %}
@@ -98,18 +98,40 @@
                     <input type="text" id="search-input" placeholder="Search tasks..." class="search-input">
                 </div>
                 <div class="filters">
-                    <select id="category-filter" class="filter-select glass-input">
-                        <option value="all">All Categories</option>
-                        {% for category in categories %}
-                        <option value="{{ category }}">{{ category }}</option>
-                        {% endfor %}
-                    </select>
-                    <select id="priority-filter" class="filter-select glass-input">
-                        <option value="all">All Priorities</option>
-                        <option value="High">High Priority</option>
-                        <option value="Medium">Medium Priority</option>
-                        <option value="Low">Low Priority</option>
-                    </select>
+                    <div class="custom-select" data-select-id="category-filter">
+                        <button type="button" class="custom-select-trigger" aria-haspopup="listbox" aria-expanded="false">
+                            <i class="bi bi-folder2 custom-select-icon"></i>
+                            <span class="custom-select-label">All Categories</span>
+                            <i class="bi bi-chevron-down custom-select-chevron"></i>
+                        </button>
+                        <ul class="custom-select-menu" role="listbox" hidden>
+                            <li role="option" data-value="all" class="is-selected" aria-selected="true">All Categories</li>
+                            {% for category in categories %}
+                            <li role="option" data-value="{{ category }}" aria-selected="false">{{ category }}</li>
+                            {% endfor %}
+                        </ul>
+                        <input type="hidden" id="category-filter" value="all">
+                    </div>
+                    <div class="custom-select" data-select-id="priority-filter">
+                        <button type="button" class="custom-select-trigger" aria-haspopup="listbox" aria-expanded="false">
+                            <i class="bi bi-flag custom-select-icon"></i>
+                            <span class="custom-select-label">All Priorities</span>
+                            <i class="bi bi-chevron-down custom-select-chevron"></i>
+                        </button>
+                        <ul class="custom-select-menu" role="listbox" hidden>
+                            <li role="option" data-value="all" class="is-selected" aria-selected="true">All Priorities</li>
+                            <li role="option" data-value="High" aria-selected="false">
+                                <span class="priority-dot priority-high"></span>High Priority
+                            </li>
+                            <li role="option" data-value="Medium" aria-selected="false">
+                                <span class="priority-dot priority-medium"></span>Medium Priority
+                            </li>
+                            <li role="option" data-value="Low" aria-selected="false">
+                                <span class="priority-dot priority-low"></span>Low Priority
+                            </li>
+                        </ul>
+                        <input type="hidden" id="priority-filter" value="all">
+                    </div>
                 </div>
                 <button class="btn-primary" onclick="openAddModal()">
                     <i class="bi bi-plus-lg"></i>
@@ -286,11 +308,18 @@
                     </div>
                     <div class="form-group">
                         <label for="task-priority">Priority</label>
-                        <select id="task-priority" name="priority" class="glass-input">
-                            <option value="Low">Low</option>
-                            <option value="Medium" selected>Medium</option>
-                            <option value="High">High</option>
-                        </select>
+                        <div class="priority-segmented" role="radiogroup" aria-label="Priority">
+                            <button type="button" class="priority-option" data-value="Low" aria-pressed="false">
+                                <span class="priority-dot priority-low"></span>Low
+                            </button>
+                            <button type="button" class="priority-option is-active" data-value="Medium" aria-pressed="true">
+                                <span class="priority-dot priority-medium"></span>Medium
+                            </button>
+                            <button type="button" class="priority-option" data-value="High" aria-pressed="false">
+                                <span class="priority-dot priority-high"></span>High
+                            </button>
+                            <input type="hidden" id="task-priority" name="priority" value="Medium">
+                        </div>
                     </div>
                 </div>
 

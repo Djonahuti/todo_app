@@ -14,7 +14,10 @@ function initializeEventListeners() {
         searchInput.addEventListener('input', debounce(handleSearch, 300));
     }
     
-    // Filter functionality
+    // Custom selects + filter functionality
+    initializeCustomSelects();
+    initializePrioritySegmented();
+
     const categoryFilter = document.getElementById('category-filter');
     const priorityFilter = document.getElementById('priority-filter');
     
@@ -26,6 +29,108 @@ function initializeEventListeners() {
     }
 }
 
+// ===== CUSTOM SELECT =====
+function initializeCustomSelects() {
+    document.querySelectorAll('.custom-select').forEach((selectEl) => {
+        const trigger = selectEl.querySelector('.custom-select-trigger');
+        const menu = selectEl.querySelector('.custom-select-menu');
+        const hiddenInput = selectEl.querySelector('input[type="hidden"]');
+        if (!trigger || !menu || !hiddenInput) return;
+
+        trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = selectEl.classList.contains('is-open');
+            closeAllCustomSelects();
+            if (!isOpen) {
+                openCustomSelect(selectEl);
+            }
+        });
+
+        menu.querySelectorAll('[role="option"]').forEach((option) => {
+            option.addEventListener('click', (e) => {
+                e.stopPropagation();
+                setCustomSelectValue(selectEl, option.dataset.value, true);
+                closeCustomSelect(selectEl);
+            });
+        });
+    });
+
+    document.addEventListener('click', closeAllCustomSelects);
+}
+
+function openCustomSelect(selectEl) {
+    const trigger = selectEl.querySelector('.custom-select-trigger');
+    const menu = selectEl.querySelector('.custom-select-menu');
+    selectEl.classList.add('is-open');
+    trigger.setAttribute('aria-expanded', 'true');
+    menu.hidden = false;
+}
+
+function closeCustomSelect(selectEl) {
+    const trigger = selectEl.querySelector('.custom-select-trigger');
+    const menu = selectEl.querySelector('.custom-select-menu');
+    selectEl.classList.remove('is-open');
+    trigger.setAttribute('aria-expanded', 'false');
+    menu.hidden = true;
+}
+
+function closeAllCustomSelects() {
+    document.querySelectorAll('.custom-select.is-open').forEach(closeCustomSelect);
+}
+
+function setCustomSelectValue(selectEl, value, dispatchChange = false) {
+    const label = selectEl.querySelector('.custom-select-label');
+    const hiddenInput = selectEl.querySelector('input[type="hidden"]');
+    const options = selectEl.querySelectorAll('[role="option"]');
+    let matched = null;
+
+    options.forEach((option) => {
+        const isSelected = option.dataset.value === value;
+        option.classList.toggle('is-selected', isSelected);
+        option.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+        if (isSelected) matched = option;
+    });
+
+    if (!matched) return;
+
+    const optionLabel = Array.from(matched.childNodes)
+        .filter((node) => node.nodeType === Node.TEXT_NODE)
+        .map((node) => node.textContent.trim())
+        .join(' ')
+        .trim() || matched.textContent.trim();
+
+    label.textContent = optionLabel;
+    hiddenInput.value = value;
+
+    if (dispatchChange) {
+        hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+}
+
+function initializePrioritySegmented() {
+    const group = document.querySelector('.priority-segmented');
+    if (!group) return;
+
+    group.querySelectorAll('.priority-option').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            setPrioritySegmentedValue(btn.dataset.value);
+        });
+    });
+}
+
+function setPrioritySegmentedValue(value) {
+    const group = document.querySelector('.priority-segmented');
+    const input = document.getElementById('task-priority');
+    if (!group || !input) return;
+
+    group.querySelectorAll('.priority-option').forEach((btn) => {
+        const isActive = btn.dataset.value === value;
+        btn.classList.toggle('is-active', isActive);
+        btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
+    input.value = value;
+}
+
 // ===== MODAL FUNCTIONS =====
 function openAddModal() {
     const modal = document.getElementById('task-modal');
@@ -35,6 +140,7 @@ function openAddModal() {
     
     currentEditingTask = null;
     form.reset();
+    setPrioritySegmentedValue('Medium');
     modalTitle.textContent = 'Create New Task';
     submitText.textContent = 'Create Task';
     
@@ -63,7 +169,7 @@ function openEditModal(taskId) {
         const category = taskCard.dataset.category;
         const priority = taskCard.dataset.priority;
         document.getElementById('task-category').value = category;
-        document.getElementById('task-priority').value = priority;
+        setPrioritySegmentedValue(priority);
         
         // Set dates and tags if visible
         const dateInfo = taskCard.querySelector('.date-info');
@@ -93,9 +199,14 @@ function closeModal() {
     currentEditingTask = null;
 }
 
-// Close modal on Escape key
+// Close modal on Escape key (after closing any open custom select)
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
+        const openSelect = document.querySelector('.custom-select.is-open');
+        if (openSelect) {
+            closeCustomSelect(openSelect);
+            return;
+        }
         closeModal();
     }
 });
