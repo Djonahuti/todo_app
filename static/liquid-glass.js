@@ -14,8 +14,8 @@ function initializeEventListeners() {
         searchInput.addEventListener('input', debounce(handleSearch, 300));
     }
     
-    // ShadCN-style selects + filter functionality
-    initializeShadSelects();
+    // Custom selects + filter functionality
+    initializeCustomSelects();
     initializePrioritySegmented();
 
     const categoryFilter = document.getElementById('category-filter');
@@ -29,153 +29,59 @@ function initializeEventListeners() {
     }
 }
 
-// ===== SHADCN-STYLE SELECT =====
-function initializeShadSelects() {
-    document.querySelectorAll('.shad-select').forEach((selectEl) => {
-        const trigger = selectEl.querySelector('.shad-select-trigger');
-        const popover = selectEl.querySelector('.shad-select-popover');
-        const viewport = selectEl.querySelector('.shad-select-viewport');
+// ===== CUSTOM SELECT =====
+function initializeCustomSelects() {
+    document.querySelectorAll('.custom-select').forEach((selectEl) => {
+        const trigger = selectEl.querySelector('.custom-select-trigger');
+        const menu = selectEl.querySelector('.custom-select-menu');
         const hiddenInput = selectEl.querySelector('input[type="hidden"]');
-        if (!trigger || !popover || !viewport || !hiddenInput) return;
+        if (!trigger || !menu || !hiddenInput) return;
 
         trigger.addEventListener('click', (e) => {
             e.stopPropagation();
             const isOpen = selectEl.classList.contains('is-open');
-            closeAllShadSelects();
+            closeAllCustomSelects();
             if (!isOpen) {
-                openShadSelect(selectEl);
+                openCustomSelect(selectEl);
             }
         });
 
-        trigger.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                if (!selectEl.classList.contains('is-open')) {
-                    openShadSelect(selectEl);
-                }
-                const options = getShadSelectOptions(selectEl);
-                const selected = options.find((opt) => opt.classList.contains('is-selected')) || options[0];
-                if (selected) highlightShadOption(selectEl, selected);
-            }
-        });
-
-        viewport.querySelectorAll('[role="option"]').forEach((option) => {
+        menu.querySelectorAll('[role="option"]').forEach((option) => {
             option.addEventListener('click', (e) => {
                 e.stopPropagation();
-                setShadSelectValue(selectEl, option.dataset.value, true);
-                closeShadSelect(selectEl);
-                trigger.focus();
+                setCustomSelectValue(selectEl, option.dataset.value, true);
+                closeCustomSelect(selectEl);
             });
-
-            option.addEventListener('mousemove', (e) => {
-                highlightShadOption(selectEl, option);
-                updateRefractPosition(option, e);
-            });
-
-            option.addEventListener('mouseleave', () => {
-                option.style.removeProperty('--refract-x');
-                option.style.removeProperty('--refract-y');
-            });
-        });
-
-        viewport.addEventListener('keydown', (e) => {
-            handleShadSelectKeydown(e, selectEl);
         });
     });
 
-    document.addEventListener('click', closeAllShadSelects);
+    document.addEventListener('click', closeAllCustomSelects);
 }
 
-function getShadSelectOptions(selectEl) {
-    return Array.from(selectEl.querySelectorAll('[role="option"]'));
-}
-
-function updateRefractPosition(option, event) {
-    const rect = option.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width) * 100;
-    const y = ((event.clientY - rect.top) / rect.height) * 100;
-    option.style.setProperty('--refract-x', `${x}%`);
-    option.style.setProperty('--refract-y', `${y}%`);
-}
-
-function openShadSelect(selectEl) {
-    const trigger = selectEl.querySelector('.shad-select-trigger');
-    const popover = selectEl.querySelector('.shad-select-popover');
-    const viewport = selectEl.querySelector('.shad-select-viewport');
+function openCustomSelect(selectEl) {
+    const trigger = selectEl.querySelector('.custom-select-trigger');
+    const menu = selectEl.querySelector('.custom-select-menu');
     selectEl.classList.add('is-open');
     trigger.setAttribute('aria-expanded', 'true');
-    popover.hidden = false;
-
-    const selected = getShadSelectOptions(selectEl).find((opt) => opt.classList.contains('is-selected'));
-    if (selected) highlightShadOption(selectEl, selected);
-    requestAnimationFrame(() => viewport.focus());
+    menu.hidden = false;
 }
 
-function closeShadSelect(selectEl) {
-    const trigger = selectEl.querySelector('.shad-select-trigger');
-    const popover = selectEl.querySelector('.shad-select-popover');
+function closeCustomSelect(selectEl) {
+    const trigger = selectEl.querySelector('.custom-select-trigger');
+    const menu = selectEl.querySelector('.custom-select-menu');
     selectEl.classList.remove('is-open');
     trigger.setAttribute('aria-expanded', 'false');
-    popover.hidden = true;
-    clearShadHighlights(selectEl);
+    menu.hidden = true;
 }
 
-function closeAllShadSelects() {
-    document.querySelectorAll('.shad-select.is-open').forEach(closeShadSelect);
+function closeAllCustomSelects() {
+    document.querySelectorAll('.custom-select.is-open').forEach(closeCustomSelect);
 }
 
-function clearShadHighlights(selectEl) {
-    getShadSelectOptions(selectEl).forEach((option) => {
-        option.classList.remove('is-highlighted');
-    });
-}
-
-function highlightShadOption(selectEl, option) {
-    clearShadHighlights(selectEl);
-    option.classList.add('is-highlighted');
-}
-
-function handleShadSelectKeydown(e, selectEl) {
-    const options = getShadSelectOptions(selectEl);
-    if (!options.length) return;
-
-    const current = options.find((opt) => opt.classList.contains('is-highlighted'))
-        || options.find((opt) => opt.classList.contains('is-selected'))
-        || options[0];
-    const index = options.indexOf(current);
-
-    if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        const next = options[Math.min(index + 1, options.length - 1)];
-        highlightShadOption(selectEl, next);
-        next.scrollIntoView({ block: 'nearest' });
-    } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        const prev = options[Math.max(index - 1, 0)];
-        highlightShadOption(selectEl, prev);
-        prev.scrollIntoView({ block: 'nearest' });
-    } else if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        setShadSelectValue(selectEl, current.dataset.value, true);
-        closeShadSelect(selectEl);
-        selectEl.querySelector('.shad-select-trigger').focus();
-    } else if (e.key === 'Escape') {
-        e.preventDefault();
-        closeShadSelect(selectEl);
-        selectEl.querySelector('.shad-select-trigger').focus();
-    } else if (e.key === 'Home') {
-        e.preventDefault();
-        highlightShadOption(selectEl, options[0]);
-    } else if (e.key === 'End') {
-        e.preventDefault();
-        highlightShadOption(selectEl, options[options.length - 1]);
-    }
-}
-
-function setShadSelectValue(selectEl, value, dispatchChange = false) {
-    const valueEl = selectEl.querySelector('.shad-select-value');
+function setCustomSelectValue(selectEl, value, dispatchChange = false) {
+    const label = selectEl.querySelector('.custom-select-label');
     const hiddenInput = selectEl.querySelector('input[type="hidden"]');
-    const options = getShadSelectOptions(selectEl);
+    const options = selectEl.querySelectorAll('[role="option"]');
     let matched = null;
 
     options.forEach((option) => {
@@ -187,8 +93,13 @@ function setShadSelectValue(selectEl, value, dispatchChange = false) {
 
     if (!matched) return;
 
-    const textEl = matched.querySelector('.shad-select-item-text');
-    valueEl.textContent = textEl ? textEl.textContent.trim() : matched.textContent.trim();
+    const optionLabel = Array.from(matched.childNodes)
+        .filter((node) => node.nodeType === Node.TEXT_NODE)
+        .map((node) => node.textContent.trim())
+        .join(' ')
+        .trim() || matched.textContent.trim();
+
+    label.textContent = optionLabel;
     hiddenInput.value = value;
 
     if (dispatchChange) {
@@ -288,12 +199,12 @@ function closeModal() {
     currentEditingTask = null;
 }
 
-// Close modal on Escape key (after closing any open select)
+// Close modal on Escape key (after closing any open custom select)
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
-        const openSelect = document.querySelector('.shad-select.is-open');
+        const openSelect = document.querySelector('.custom-select.is-open');
         if (openSelect) {
-            closeShadSelect(openSelect);
+            closeCustomSelect(openSelect);
             return;
         }
         closeModal();
